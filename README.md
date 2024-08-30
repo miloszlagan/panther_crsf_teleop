@@ -13,7 +13,7 @@ colcon build --packages-select panther_crsf_teleop --symlink-install
 ## Usage
 
 ```ros2
-ros2 launch panther_crsf_teleop panther_crsf_teleop.launch.py
+ros2 run panther_crsf_teleop panther_crsf_teleop
 ```
 
 Optional arguments:
