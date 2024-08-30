@@ -7,7 +7,7 @@
   <maintainer email="milosz.lagan@husarion.com">mily</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>python-serial</depend>
+  <depend>python3-serial</depend>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
