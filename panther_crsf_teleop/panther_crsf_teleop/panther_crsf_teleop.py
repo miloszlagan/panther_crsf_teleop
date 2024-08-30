@@ -3,7 +3,7 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
 from rcl_interfaces.msg import ParameterDescriptor
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool
+from std_srvs.srv import Trigger
 from sensor_msgs.msg import NavSatFix
 from panther_crsf_interfaces.msg import LinkStatus
 
@@ -25,15 +25,7 @@ class CRSFInterface(Node):
                 depth=1
             )
         )
-        self.e_stop_publisher = self.create_publisher(
-            Bool,
-            'hardware/e_stop',
-            QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
-                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-                depth=1
-            )
-        )
+        
         # self.gps_fix_subscription = self.create_subscription(
         #     NavSatFix,
         #     'gps/fix',
@@ -55,6 +47,16 @@ class CRSFInterface(Node):
             )
         )
         
+        self.e_stop_trigger = self.create_client(
+            Trigger,
+            'hardware/e_stop_trigger',
+        )
+        
+        self.e_stop_reset = self.create_client(
+            Trigger,
+            'hardware/e_stop_reset',
+        )   
+        
         self.link_status = LinkStatus()
         
         self.declare_parameter('port', '/dev/ttyUSB0', ParameterDescriptor(description='CRSF receiver serial port'))
@@ -73,7 +75,7 @@ class CRSFInterface(Node):
         self.timer = self.create_timer(0.01, self.run)
         # self.telemetry_timer = self.create_timer(1.0, self.senf_periodic_telemetry)
         
-        self.rc_estop_state = Bool(data=True)
+        self.rc_estop_state = True
         self.e_stop_republisher = self.create_timer(1, self.republish_e_stop)
         
     def run(self):
@@ -91,9 +93,9 @@ class CRSFInterface(Node):
             # Asserted e-stop is retransmitted once per second by republish timer
             # Deasserted e-stop is transmitted only once
             requested_e_stop = channels[4] < 0.5
-            if requested_e_stop != self.rc_estop_state.data:
-                self.rc_estop_state.data = requested_e_stop
-                self.e_stop_publisher.publish(self.rc_estop_state)
+            if requested_e_stop != self.rc_estop_state:
+                self.rc_estop_state = requested_e_stop
+                self.update_e_stop()
             
             # Disable sending cmd_vel if override switch is asserted
             send_cmd_vel = channels[6] < -0.5
@@ -140,9 +142,11 @@ class CRSFInterface(Node):
         else:
             self.get_logger().warn(f"Unknown CRSF message (Type: {msg.msg_type.name}, Length: {msg.length})")
             
-    def republish_e_stop(self):
+    def update_e_stop(self):
         if self.rc_estop_state.data:
-            self.e_stop_publisher.publish(self.rc_estop_state)
+            self.e_stop_trigger.call_async()
+        else:
+            self.e_stop_reset.call_async()
             
     def send_gps_fix(self, fix: NavSatFix):
         self.get_logger().info(f"Sending GPS fix: {fix.latitude}, {fix.longitude}")
