@@ -24,3 +24,11 @@ Node publishes:
 - `/cmd_vel` - geometry_msgs/Twist - velocity commands for the robot
 - `/hardware/e_stop` - std_msgs/Bool - emergency stop state
 - `/link_status` - panther_crsf_teleop_msgs/LinkStatus - link status between the remote control and the robot. See [CRSF_FRAMETYPE_LINK_STATISTICS](https://github.com/crsf-wg/crsf/wiki/CRSF_FRAMETYPE_LINK_STATISTICS)
+
+## Channel mapping
+
+The following channels are used for controlling the robot via the TX16S remote control:
+- Channel 1 - Right gimbal up/down - forward/backward velocity
+- Channel 3 - Left gimbal left/right - turning (angular) velocity
+- Channel 5 - SF switch - emergency stop
+- Channel 6 - SA switch (down position) - silence `cmd_vel` messages, allows other nodes to control the robot while enabling e_stop functionality
