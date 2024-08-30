@@ -76,7 +76,7 @@ class CRSFInterface(Node):
         # self.telemetry_timer = self.create_timer(1.0, self.senf_periodic_telemetry)
         
         self.rc_estop_state = True
-        self.e_stop_republisher = self.create_timer(1, self.republish_e_stop)
+        self.e_stop_republisher = self.create_timer(1, self.update_e_stop)
         
     def run(self):
         if self.serial.in_waiting > 0:
