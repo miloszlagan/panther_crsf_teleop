@@ -95,15 +95,21 @@ class CRSFInterface(Node):
             requested_e_stop = channels[4] < 0.5
             if requested_e_stop != self.rc_estop_state:
                 self.rc_estop_state = requested_e_stop
-                self.update_e_stop()
+                
+                if self.rc_estop_state:
+                    self.e_stop_trigger.call_async(Trigger.Request())
+                else:
+                    self.e_stop_reset.call_async(Trigger.Request())
             
             # Disable sending cmd_vel if override switch is asserted
             send_cmd_vel = channels[6] < -0.5
             
             if send_cmd_vel:
+                speed_modifier = [0.5, 1, 2][round(channels[10]) + 1]
+                
                 t = Twist()
-                t.linear.x = channels[1]
-                t.angular.z = -channels[3]
+                t.linear.x = channels[1] * speed_modifier
+                t.angular.z = -channels[3] * speed_modifier
                 
                 self.cmd_vel_publisher.publish(t)
         
@@ -143,10 +149,8 @@ class CRSFInterface(Node):
             self.get_logger().warn(f"Unknown CRSF message (Type: {msg.msg_type.name}, Length: {msg.length})")
             
     def update_e_stop(self):
-        if self.rc_estop_state.data:
-            self.e_stop_trigger.call_async()
-        else:
-            self.e_stop_reset.call_async()
+        if self.rc_estop_state:
+            self.e_stop_trigger.call_async(Trigger.Request())
             
     def send_gps_fix(self, fix: NavSatFix):
         self.get_logger().info(f"Sending GPS fix: {fix.latitude}, {fix.longitude}")
