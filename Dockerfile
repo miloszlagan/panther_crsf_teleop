@@ -20,4 +20,4 @@ RUN apt-get update --fix-missing && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-CMD ["ros2", "run", "panther_crsf_teleop", "panther_crsf_teleop"]
+CMD ["ros2", "run", "panther_crsf_teleop", "panther_crsf_teleop", "--ros-args", "--remap __ns:=/panther"]
